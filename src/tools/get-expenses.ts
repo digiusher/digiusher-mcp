@@ -2,6 +2,7 @@ import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
 import { API_BASE_URL } from "../utils/config";
+import { addWorkflowHints, createExpenseWorkflowHint } from "../utils/workflow-hints";
 
 const currencyEnum = z.enum([
   "AED",
@@ -377,7 +378,17 @@ export const schema = {
   filters: z
     .union([filtersSchema, z.null()])
     .optional()
-    .describe("Get exact values to filter from the get_dimension_values tools"),
+    .describe(
+      "Filter expenses by dimensions. " +
+        "CRITICAL: All filter values MUST come from get_dimension_values tool. " +
+        "Do NOT guess or hardcode filter values - they will cause API errors if they don't exist.\n\n" +
+        "Workflow:\n" +
+        "1. Call get_dimension_values to discover available values for each dimension you want to filter\n" +
+        "2. Use only the exact values returned by get_dimension_values in this filters parameter\n\n" +
+        "Example: To filter service_name by 'EC2':\n" +
+        "1. First: get_dimension_values(dimension={dimension_type:'standard', name:'service_name'}, search:'EC2')\n" +
+        "2. Then: get_expenses(filters={service_name:['Amazon Elastic Compute Cloud']})"
+    ),
   metrics: z
     .array(z.enum(["billed_cost", "effective_cost", "list_cost", "consumed_quantity"]))
     .default(["effective_cost", "billed_cost"])
@@ -397,12 +408,36 @@ export const schema = {
 export const metadata: ToolMetadata = {
   name: "get_expenses",
   description:
-    "Query aggregated expense data from DigiUsher with flexible filtering, grouping, and metrics. Before running this tool ideally run the get_dimension_values tool to discover available dimension values for filtering.",
+    "Query aggregated expense data from DigiUsher with flexible filtering, grouping, and metrics.\n\n" +
+    "IMPORTANT PREREQUISITES:\n" +
+    "1. BEFORE calling with filters: Use get_dimension_values to discover valid filter values\n" +
+    "   - Example: To filter by service_name, first call get_dimension_values with dimension_type='standard', name='service_name'\n" +
+    "   - Never guess filter values - always discover them first to avoid API errors\n" +
+    "2. AFTER calling this tool: Use get_dimension_lookups to translate IDs in results\n" +
+    "   - Results contain IDs (data_source_id, pool_id) that need translation to names\n" +
+    "   - Required for user-facing reports and analysis\n\n" +
+    "Typical workflow:\n" +
+    "1. get_dimension_values (optional, if filtering) → discover valid filter values\n" +
+    "2. get_expenses → query expense data with discovered filters\n" +
+    "3. get_dimension_lookups → translate IDs to names for presentation\n\n" +
+    "Filter validation:\n" +
+    "- All filter values MUST come from get_dimension_values\n" +
+    "- Using invalid values causes API errors\n" +
+    "- When in doubt, call get_dimension_values first",
   annotations: {
-    title: "Get Expenses but run get_dimension_values first to discover available dimension values",
+    title: "Query Expenses (Requires get_dimension_values first, then get_dimension_lookups after)",
     readOnlyHint: true,
     destructiveHint: false,
-    idempotentHint: true
+    idempotentHint: true,
+    openWorldHint: true
+  },
+  _meta: {
+    openai: {
+      toolInvocation: {
+        invoking: "Querying expense data...",
+        invoked: "Expenses retrieved. Call get_dimension_lookups to translate IDs to names."
+      }
+    }
   }
 };
 
@@ -419,11 +454,24 @@ export default async function get_expenses(params: InferSchema<typeof schema>) {
 
     if (!response.ok) {
       const errorText = await response.text();
+
+      // Special handling for invalid filter values
+      if (response.status === 400 && errorText.toLowerCase().includes("invalid")) {
+        throw new Error(
+          `Invalid filter value detected. ` +
+            `REQUIRED ACTION: Call get_dimension_values to discover valid values. ` +
+            `Example: get_dimension_values({organization_id: "${organization_id}", ` +
+            `dimension: {dimension_type: "standard", name: "service_name"}}). ` +
+            `Original error: ${errorText}`
+        );
+      }
+
       throw new Error(`API request failed with status ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
-    return { content: [{ type: "text", text: JSON.stringify(data) }] };
+    const enrichedData = addWorkflowHints(data, createExpenseWorkflowHint(organization_id));
+    return { content: [{ type: "text", text: JSON.stringify(enrichedData) }] };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch expenses: ${error.message}`);

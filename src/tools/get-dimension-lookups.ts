@@ -13,12 +13,32 @@ export const schema = {
 // Define tool metadata
 export const metadata: ToolMetadata = {
   name: "get_dimension_lookups",
-  description: "Retrieve lookup tables to translate dimension IDs to display values for expenses data",
+  description:
+    "COMPANION TOOL: Call this AFTER get_expenses to interpret ID-based results.\n\n" +
+    "Retrieve lookup tables to translate dimension IDs to human-readable display values. " +
+    "Expense results often contain IDs (data_source_id, pool_id, etc.) that need translation.\n\n" +
+    "Required workflow for user-facing reports:\n" +
+    "1. Call get_expenses to retrieve expense data\n" +
+    "2. If results contain IDs (data_source_id, pool_id), call this tool\n" +
+    "3. Use the lookup tables to translate IDs to meaningful names\n\n" +
+    "Returns lookup dictionaries:\n" +
+    "- data_sources: {id -> {name, provider, ...}}\n" +
+    "- pools: {id -> {name, ...}}\n\n" +
+    "Without this tool, users see cryptic UUIDs instead of account/pool names.",
   annotations: {
-    title: "Get Dimension Lookups",
+    title: "Translate IDs to Names (Call AFTER get_expenses)",
     readOnlyHint: true,
     destructiveHint: false,
-    idempotentHint: true
+    idempotentHint: true,
+    openWorldHint: true
+  },
+  _meta: {
+    openai: {
+      toolInvocation: {
+        invoking: "Fetching ID-to-name lookup tables...",
+        invoked: "Lookups ready. These translate IDs in expense results to human-readable names."
+      }
+    }
   }
 };
 

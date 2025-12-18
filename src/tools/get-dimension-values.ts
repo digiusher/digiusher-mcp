@@ -111,15 +111,31 @@ export const schema = {
 export const metadata: ToolMetadata = {
   name: "get_dimension_values",
   description:
+    "PREREQUISITE TOOL: Call this BEFORE get_expenses when you need to filter by dimensions.\n\n" +
     "Query available values for any expense dimension (standard dimensions or custom tags). " +
-    "Use this to discover what values can be used to filter or group expenses in get_expenses, " +
-    "such as available services, regions, resource types, providers, or custom tag values. " +
+    "Returns the EXACT values that exist in your data - never guess filter values.\n\n" +
+    "Common workflow:\n" +
+    "1. Call this tool to discover available values (e.g., service names, regions)\n" +
+    "2. Use the returned values in get_expenses filters parameter\n\n" +
+    "Examples:\n" +
+    "- Before filtering by service: discover service_name values\n" +
+    "- Before filtering by region: discover region_id values\n" +
+    "- Before filtering by tags: discover tag keys first, then tag values\n\n" +
     "Supports search filtering and pagination for efficient value discovery.",
   annotations: {
-    title: "Get Dimension Values for filtering Expenses",
+    title: "Discover Valid Dimension Values (Call BEFORE get_expenses)",
     readOnlyHint: true,
     destructiveHint: false,
-    idempotentHint: true
+    idempotentHint: true,
+    openWorldHint: true
+  },
+  _meta: {
+    openai: {
+      toolInvocation: {
+        invoking: "Discovering available dimension values...",
+        invoked: "Dimension values discovered. Use these exact values in get_expenses filters."
+      }
+    }
   }
 };
 
