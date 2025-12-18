@@ -1,7 +1,6 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
 
-// Currency enum - converted from zod v4
 const currencyEnum = z.enum([
   "AED",
   "AFN",
@@ -186,7 +185,6 @@ const currencyEnum = z.enum([
   "ZWL"
 ]);
 
-// Standard dimensions enum - converted from zod v4
 const standardDimensionEnum = z.enum([
   "service_name",
   "service_category",
@@ -212,7 +210,6 @@ const standardDimensionEnum = z.enum([
   "rule_id"
 ]);
 
-// Tag specification object - converted from zod v4
 const tagSpecSchema = z
   .object({
     type: z.enum(["keys", "values"]).describe("Type of tag operation for TagSpec"),
@@ -225,7 +222,6 @@ const tagSpecSchema = z
     'Specification for tag-related operations: grouping, querying values, etc.\n\nCan be used for:\n- Grouping by tag keys (type="keys") - shows which tag keys exist and their costs\n- Grouping by tag values (type="values") - shows values for a specific tag key\n- Querying available tag values'
   );
 
-// Standard filter for dimensions - converted from zod v4
 const standardFilterSchema = z
   .object({
     include: z.union([z.array(z.string()), z.null()]).optional(),
@@ -233,7 +229,6 @@ const standardFilterSchema = z
   })
   .describe("Standard filter for dimensions - consistent pattern for inclusion/exclusion");
 
-// Range filter for numeric values - converted from zod v4
 const rangeFilterSchema = z
   .object({
     value: z.number(),
@@ -241,7 +236,6 @@ const rangeFilterSchema = z
   })
   .describe("Range filter for numeric values with operator");
 
-// Tag filter - converted from zod v4
 const tagFilterSchema = z
   .object({
     key: z.string(),
@@ -251,7 +245,6 @@ const tagFilterSchema = z
   })
   .describe("Filter for tag-based dimensions - extends standard filter with existence check");
 
-// Filters object - converted from zod v4
 const filtersSchema = z
   .object({
     service_name: z
@@ -352,7 +345,6 @@ const filtersSchema = z
     "Filter expenses by various dimensions.\n\nEach filter accepts either a simple list of values to include,\nor a StandardFilter object for advanced include/exclude logic."
   );
 
-// Order by specification - converted from zod v4
 const orderBySchema = z
   .object({
     field: z
@@ -362,7 +354,6 @@ const orderBySchema = z
   })
   .describe("Specification for ordering expense results");
 
-// Define the schema for tool parameters - converted from zod v4
 export const schema = {
   organization_id: z.string().uuid().describe("The organization ID to query expenses for"),
   bearer_token: z.string().describe("Bearer token for API authentication"),
