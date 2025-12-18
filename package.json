@@ -1,0 +1,26 @@
+{
+  "name": "digiusher-mcp",
+  "version": "0.1.0",
+  "description": "An xmcp application with tool syntax",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "xmcp build",
+    "dev": "xmcp dev",
+    "start": "node dist/http.js",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
+  },
+  "dependencies": {
+    "xmcp": "0.5.4",
+    "zod": "3.24.4"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "3.7.4"
+  }
+}
