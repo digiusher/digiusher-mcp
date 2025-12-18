@@ -1,5 +1,6 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
+import { getAuthHeaders } from "../utils/auth";
 
 const currencyEnum = z.enum([
   "AED",
@@ -356,7 +357,6 @@ const orderBySchema = z
 
 export const schema = {
   organization_id: z.string().uuid().describe("The organization ID to query expenses for"),
-  bearer_token: z.string().describe("Bearer token for API authentication"),
   start_date: z.string().describe("Start date for expense query (ISO 8601 format: YYYY-MM-DD)"),
   end_date: z.string().describe("End date for expense query (ISO 8601 format: YYYY-MM-DD)"),
   currency: currencyEnum.optional().describe("Currency code for expense amounts"),
@@ -403,15 +403,12 @@ export const metadata: ToolMetadata = {
 
 // Tool implementation
 export default async function get_expenses(params: InferSchema<typeof schema>) {
-  const { organization_id, bearer_token, ...requestBody } = params;
+  const { organization_id, ...requestBody } = params;
 
   try {
     const response = await fetch(`https://app.digiusher.com/api/v3/organizations/${organization_id}/expenses`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${bearer_token}`
-      },
+      headers: getAuthHeaders(true),
       body: JSON.stringify(requestBody)
     });
 

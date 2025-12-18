@@ -1,10 +1,10 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
+import { getAuthHeaders } from "../utils/auth";
 
 // Define schema
 export const schema = {
   organization_id: z.string().uuid().describe("The organization ID to query dimension lookups for"),
-  bearer_token: z.string().describe("Bearer token for API authentication"),
   include_pools: z.boolean().default(true).optional().describe("Include pool lookups in the response"),
   include_data_sources: z.boolean().default(true).optional().describe("Include data source lookups in the response")
 };
@@ -23,7 +23,7 @@ export const metadata: ToolMetadata = {
 
 // Tool implementation
 export default async function get_dimension_lookups(params: InferSchema<typeof schema>) {
-  const { organization_id, bearer_token, include_pools = true, include_data_sources = true } = params;
+  const { organization_id, include_pools = true, include_data_sources = true } = params;
 
   try {
     // Build query parameters
@@ -35,9 +35,7 @@ export default async function get_dimension_lookups(params: InferSchema<typeof s
       `https://app.digiusher.com/api/v3/organizations/${organization_id}/expenses/dimensions/lookups?${queryParams.toString()}`,
       {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${bearer_token}`
-        }
+        headers: getAuthHeaders()
       }
     );
 

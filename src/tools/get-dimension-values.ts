@@ -1,5 +1,6 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
+import { getAuthHeaders } from "../utils/auth";
 
 // Constants for API constraints
 const DIMENSION_VALUES_LIMIT_DEFAULT = 100;
@@ -77,8 +78,6 @@ const dimensionSpecSchema = z.discriminatedUnion("dimension_type", [
 export const schema = {
   organization_id: z.string().uuid().describe("The organization ID to query dimension values for"),
 
-  bearer_token: z.string().describe("Bearer token for API authentication"),
-
   dimension: dimensionSpecSchema.describe(
     "Dimension specification - either a standard dimension or a tag-based dimension. " +
       "Use 'standard' dimension_type for built-in dimensions like service_name, region_id, provider. " +
@@ -125,17 +124,14 @@ export const metadata: ToolMetadata = {
 
 // Tool implementation
 export default async function get_dimension_values(params: InferSchema<typeof schema>) {
-  const { organization_id, bearer_token, ...requestBody } = params;
+  const { organization_id, ...requestBody } = params;
 
   try {
     const response = await fetch(
       `https://app.digiusher.com/api/v3/organizations/${organization_id}/expenses/dimensions/query`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${bearer_token}`
-        },
+        headers: getAuthHeaders(true),
         body: JSON.stringify(requestBody)
       }
     );

@@ -1,5 +1,6 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
+import { getAuthHeaders } from "../utils/auth";
 
 // Define organization schema based on API response structure
 const organizationSchema = z.object({
@@ -14,9 +15,7 @@ const organizationSchema = z.object({
 });
 
 // Define tool parameters schema
-export const schema = {
-  bearer_token: z.string().describe("Bearer token for API authentication")
-};
+export const schema = {};
 
 // Define tool metadata
 export const metadata: ToolMetadata = {
@@ -33,15 +32,10 @@ export const metadata: ToolMetadata = {
 
 // Tool implementation
 export default async function list_organizations(params: InferSchema<typeof schema>) {
-  const { bearer_token } = params;
-
   try {
     const response = await fetch("https://app.digiusher.com/restapi/v2/organizations", {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${bearer_token}`,
-        "Content-Type": "application/json"
-      }
+      headers: getAuthHeaders(true)
     });
 
     if (!response.ok) {
