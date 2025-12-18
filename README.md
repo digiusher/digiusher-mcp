@@ -1,28 +1,127 @@
-# xmcp Application
+# Digiusher MCP Server
 
-This project was created with [create-xmcp-app](https://github.com/basementstudio/xmcp).
+This project was created with [create-xmcp-app](https://github.com/basementstudio/xmcp) and provides MCP (Model Context Protocol) tools for interacting with the Digiusher expense management platform.
 
 ## Getting Started
 
-First, run the development server:
+First, install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+```
+
+Then run the development server:
+
+```bash
 pnpm dev
 ```
 
-This will start the MCP server with the selected transport method.
+This will start the MCP server with hot reloading enabled.
+
+## Building for Production
+
+To build your project for production:
+
+```bash
+pnpm build
+```
+
+This will compile your TypeScript code and output it to the `dist` directory.
+
+## Connecting to MCP Clients
+
+After building the project, you can connect it to various MCP clients. The server uses STDIO transport for communication with MCP clients.
+
+### Finding Your Node Executable Path
+
+Most MCP clients require the absolute path to your Node.js executable. You can find it using:
+
+**macOS/Linux:**
+
+```bash
+which node
+```
+
+**Windows (Command Prompt):**
+
+```cmd
+where node
+```
+
+**Windows (PowerShell):**
+
+```powershell
+Get-Command node | Select-Object -ExpandProperty Source
+```
+
+### Claude Desktop Configuration
+
+Add this to your Claude Desktop configuration file:
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "digiusher": {
+      "command": "/absolute/path/to/node",
+      "args": ["/absolute/path/to/digiusher-mcp/dist/stdio.js"],
+      "env": {
+        "DIGIUSHER_TOKEN": "your_digiusher_api_token"
+      }
+    }
+  }
+}
+```
+
+### VS Code / Cline Configuration
+
+Add this to your Cline MCP settings in VS Code:
+
+**Settings path:** `.vscode/cline_mcp_settings.json` or Cline extension settings
+
+```json
+{
+  "mcpServers": {
+    "digiusher": {
+      "command": "/absolute/path/to/node",
+      "args": ["/absolute/path/to/digiusher-mcp/dist/stdio.js"],
+      "env": {
+        "DIGIUSHER_TOKEN": "your_digiusher_api_token"
+      }
+    }
+  }
+}
+```
+
+### Other MCP Clients
+
+For other MCP clients, use this general configuration format:
+
+```json
+{
+  "command": "/absolute/path/to/node",
+  "args": ["/absolute/path/to/digiusher-mcp/dist/stdio.js"],
+  "env": {
+    "DIGIUSHER_TOKEN": "your_digiusher_api_token"
+  }
+}
+```
+
+### Configuration Notes
+
+- Replace `/absolute/path/to/node` with the output from the `which node` (or `where node`) command
+- Replace `/absolute/path/to/digiusher-mcp` with the actual path to this project directory
+- Replace `your_digiusher_api_token` with your actual Digiusher API token
+- **Security:** Never commit your API token to version control
+- You can obtain your Digiusher API token from the Digiusher platform settings
 
 ## Project Structure
 
-This project uses the structured approach where tools, prompts, and resources are automatically discovered from their respective directories:
+This project uses the structured approach where tools are automatically discovered from the tools directory:
 
-- `src/tools` - Tool definitions
-- `src/prompts` - Prompt templates
-- `src/resources` - Resource handlers
+- `src/tools` - Tool definitions for MCP
 
 ### Tools
 
@@ -52,55 +151,6 @@ export default function greet({ name }: InferSchema<typeof schema>) {
 }
 ```
 
-### Prompts
-
-Prompts are template definitions for AI interactions:
-
-```typescript
-import { z } from "zod";
-import { type InferSchema, type PromptMetadata } from "xmcp";
-
-export const schema = {
-  code: z.string().describe("The code to review")
-};
-
-export const metadata: PromptMetadata = {
-  name: "review-code",
-  title: "Review Code",
-  description: "Review code for best practices and potential issues",
-  role: "user"
-};
-
-export default function reviewCode({ code }: InferSchema<typeof schema>) {
-  return `Please review this code: ${code}`;
-}
-```
-
-### Resources
-
-Resources provide data or content with URI-based access:
-
-```typescript
-import { z } from "zod";
-import { type ResourceMetadata, type InferSchema } from "xmcp";
-
-export const schema = {
-  userId: z.string().describe("The ID of the user")
-};
-
-export const metadata: ResourceMetadata = {
-  name: "user-profile",
-  title: "User Profile",
-  description: "User profile information"
-};
-
-export default function handler({ userId }: InferSchema<typeof schema>) {
-  return `Profile data for user ${userId}`;
-}
-```
-
-## Adding New Components
-
 ### Adding New Tools
 
 To add a new tool:
@@ -110,68 +160,33 @@ To add a new tool:
 3. Export a `metadata` object with tool information
 4. Export a default function that implements the tool logic
 
-### Adding New Prompts
+The tool will be automatically discovered and registered by the xmcp framework.
 
-To add a new prompt:
+## Development
 
-1. Create a new `.ts` file in the `src/prompts` directory
-2. Export a `schema` object defining the prompt parameters using Zod
-3. Export a `metadata` object with prompt information and role
-4. Export a default function that returns the prompt text
-
-### Adding New Resources
-
-To add a new resource:
-
-1. Create a new `.ts` file in the `src/resources` directory
-2. Use folder structure to define the URI (e.g., `(users)/[userId]/profile.ts` → `users://{userId}/profile`)
-3. Export a `schema` object for dynamic parameters (optional for static resources)
-4. Export a `metadata` object with resource information
-5. Export a default function that returns the resource content
-
-## Building for Production
-
-To build your project for production:
+Run the development server with hot reloading:
 
 ```bash
-npm run build
-# or
-yarn build
-# or
-pnpm build
+pnpm dev
 ```
 
-This will compile your TypeScript code and output it to the `dist` directory.
+## Running in Production
 
-## Running the Server
-
-You can run the server for the transport built with:
-
-- HTTP: `node dist/http.js`
-- STDIO: `node dist/stdio.js`
-
-Given the selected transport method, you will have a custom start script added to the `package.json` file.
-
-For HTTP:
+After building, you can start the STDIO server:
 
 ```bash
-npm run start-http
-# or
-yarn start-http
-# or
-pnpm start-http
-```
-
-For STDIO:
-
-```bash
-npm run start-stdio
-# or
-yarn start-stdio
-# or
 pnpm start-stdio
 ```
+
+Or run it directly:
+
+```bash
+node dist/stdio.js
+```
+
+Note: For MCP client integration, you typically don't need to run this manually - the MCP client will start the server automatically using the configuration above.
 
 ## Learn More
 
 - [xmcp Documentation](https://xmcp.dev/docs)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
