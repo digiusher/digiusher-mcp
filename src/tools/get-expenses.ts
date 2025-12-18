@@ -399,7 +399,7 @@ export const metadata: ToolMetadata = {
   description:
     "Query aggregated expense data from DigiUsher with flexible filtering, grouping, and metrics. Before running this tool ideally run the get_dimension_values tool to discover available dimension values for filtering.",
   annotations: {
-    title: "Get Expenses",
+    title: "Get Expenses but run get_dimension_values first to discover available dimension values",
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true
