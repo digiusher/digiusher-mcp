@@ -1,4 +1,4 @@
-import { type InferSchema, type ToolMetadata } from "xmcp";
+import { type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
 import { API_BASE_URL } from "../utils/config";
@@ -15,16 +15,13 @@ const organizationSchema = z.object({
   cleaned_at: z.number().describe("Timestamp when organization was cleaned (0 if not cleaned)")
 });
 
-// Define tool parameters schema
-export const schema = {};
-
 // Define tool metadata
 export const metadata: ToolMetadata = {
   name: "list_organizations",
   description:
-    "Retrieve a list of all organizations accessible by the authenticated user. Use this tool first to get the required organization IDs for other operations.",
+    "Retrieve a list of all organizations accessible by the authenticated user. Then prompt the user to pick an organization ID for further operations.",
   annotations: {
-    title: "List Organizations",
+    title: "List Organizations and ask the user to pick an organization ID for further operations",
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true
@@ -32,7 +29,7 @@ export const metadata: ToolMetadata = {
 };
 
 // Tool implementation
-export default async function list_organizations(params: InferSchema<typeof schema>) {
+export default async function list_organizations() {
   try {
     const response = await fetch(`${API_BASE_URL}/restapi/v2/organizations`, {
       method: "GET",
@@ -46,11 +43,7 @@ export default async function list_organizations(params: InferSchema<typeof sche
 
     const data = await response.json();
 
-    // Validate response structure
-    const organizationsArraySchema = z.array(organizationSchema);
-    const validatedData = organizationsArraySchema.parse(data);
-
-    return validatedData;
+    return { content: [{ type: "text", text: JSON.stringify(data) }] };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch organizations: ${error.message}`);

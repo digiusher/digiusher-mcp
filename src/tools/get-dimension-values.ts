@@ -116,7 +116,7 @@ export const metadata: ToolMetadata = {
     "such as available services, regions, resource types, providers, or custom tag values. " +
     "Supports search filtering and pagination for efficient value discovery.",
   annotations: {
-    title: "Get Dimension Values",
+    title: "Get Dimension Values for filtering Expenses",
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true
@@ -140,7 +140,7 @@ export default async function get_dimension_values(params: InferSchema<typeof sc
     }
 
     const data = await response.json();
-    return data;
+    return { content: [{ type: "text", text: JSON.stringify(data) }] };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch dimension values: ${error.message}`);

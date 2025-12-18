@@ -374,7 +374,10 @@ export const schema = {
     .max(3)
     .optional()
     .describe("Dimensions to group results by (max 3)"),
-  filters: z.union([filtersSchema, z.null()]).optional().describe("Filter criteria for expenses"),
+  filters: z
+    .union([filtersSchema, z.null()])
+    .optional()
+    .describe("Get exact values to filter from the get_dimension_values tools"),
   metrics: z
     .array(z.enum(["billed_cost", "effective_cost", "list_cost", "consumed_quantity"]))
     .default(["effective_cost", "billed_cost"])
@@ -393,7 +396,8 @@ export const schema = {
 // Define tool metadata
 export const metadata: ToolMetadata = {
   name: "get_expenses",
-  description: "Query aggregated expense data from DigiUsher with flexible filtering, grouping, and metrics",
+  description:
+    "Query aggregated expense data from DigiUsher with flexible filtering, grouping, and metrics. Before running this tool ideally run the get_dimension_values tool to discover available dimension values for filtering.",
   annotations: {
     title: "Get Expenses",
     readOnlyHint: true,
@@ -419,7 +423,7 @@ export default async function get_expenses(params: InferSchema<typeof schema>) {
     }
 
     const data = await response.json();
-    return data;
+    return { content: [{ type: "text", text: JSON.stringify(data) }] };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch expenses: ${error.message}`);

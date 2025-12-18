@@ -46,7 +46,7 @@ export default async function get_dimension_lookups(params: InferSchema<typeof s
     }
 
     const data = await response.json();
-    return data;
+    return { content: [{ type: "text", text: JSON.stringify(data) }] };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch dimension lookups: ${error.message}`);
