@@ -1,6 +1,7 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
+import { API_BASE_URL } from "../utils/config";
 
 // Constants for API constraints
 const DIMENSION_VALUES_LIMIT_DEFAULT = 100;
@@ -127,14 +128,11 @@ export default async function get_dimension_values(params: InferSchema<typeof sc
   const { organization_id, ...requestBody } = params;
 
   try {
-    const response = await fetch(
-      `https://app.digiusher.com/api/v3/organizations/${organization_id}/expenses/dimensions/query`,
-      {
-        method: "POST",
-        headers: getAuthHeaders(true),
-        body: JSON.stringify(requestBody)
-      }
-    );
+    const response = await fetch(`${API_BASE_URL}/api/v3/organizations/${organization_id}/expenses/dimensions/query`, {
+      method: "POST",
+      headers: getAuthHeaders(true),
+      body: JSON.stringify(requestBody)
+    });
 
     if (!response.ok) {
       const errorText = await response.text();

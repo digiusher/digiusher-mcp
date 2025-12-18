@@ -1,6 +1,7 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
+import { API_BASE_URL } from "../utils/config";
 
 // Define organization schema based on API response structure
 const organizationSchema = z.object({
@@ -33,7 +34,7 @@ export const metadata: ToolMetadata = {
 // Tool implementation
 export default async function list_organizations(params: InferSchema<typeof schema>) {
   try {
-    const response = await fetch("https://app.digiusher.com/restapi/v2/organizations", {
+    const response = await fetch(`${API_BASE_URL}/restapi/v2/organizations`, {
       method: "GET",
       headers: getAuthHeaders(true)
     });

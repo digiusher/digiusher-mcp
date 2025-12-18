@@ -1,6 +1,7 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
+import { API_BASE_URL } from "../utils/config";
 
 const currencyEnum = z.enum([
   "AED",
@@ -406,7 +407,7 @@ export default async function get_expenses(params: InferSchema<typeof schema>) {
   const { organization_id, ...requestBody } = params;
 
   try {
-    const response = await fetch(`https://app.digiusher.com/api/v3/organizations/${organization_id}/expenses`, {
+    const response = await fetch(`${API_BASE_URL}/api/v3/organizations/${organization_id}/expenses`, {
       method: "POST",
       headers: getAuthHeaders(true),
       body: JSON.stringify(requestBody)

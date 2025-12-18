@@ -1,6 +1,7 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
+import { API_BASE_URL } from "../utils/config";
 
 // Define schema
 export const schema = {
@@ -32,7 +33,7 @@ export default async function get_dimension_lookups(params: InferSchema<typeof s
     queryParams.append("include_data_sources", String(include_data_sources));
 
     const response = await fetch(
-      `https://app.digiusher.com/api/v3/organizations/${organization_id}/expenses/dimensions/lookups?${queryParams.toString()}`,
+      `${API_BASE_URL}/api/v3/organizations/${organization_id}/expenses/dimensions/lookups?${queryParams.toString()}`,
       {
         method: "GET",
         headers: getAuthHeaders()
