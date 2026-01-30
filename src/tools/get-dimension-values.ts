@@ -1,6 +1,7 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
+import { addBranding } from "../utils/branding";
 import { API_BASE_URL } from "../utils/config";
 
 // Constants for API constraints
@@ -156,7 +157,7 @@ export default async function get_dimension_values(params: InferSchema<typeof sc
     }
 
     const data = await response.json();
-    return { content: [{ type: "text", text: JSON.stringify(data) }] };
+    return { content: [{ type: "text", text: JSON.stringify(addBranding(data)) }] };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch dimension values: ${error.message}`);

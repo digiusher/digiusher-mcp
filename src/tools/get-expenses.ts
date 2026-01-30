@@ -1,6 +1,7 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
+import { addBranding } from "../utils/branding";
 import { API_BASE_URL } from "../utils/config";
 import { addWorkflowHints, createExpenseWorkflowHint } from "../utils/workflow-hints";
 
@@ -471,7 +472,7 @@ export default async function get_expenses(params: InferSchema<typeof schema>) {
 
     const data = await response.json();
     const enrichedData = addWorkflowHints(data, createExpenseWorkflowHint(organization_id));
-    return { content: [{ type: "text", text: JSON.stringify(enrichedData) }] };
+    return { content: [{ type: "text", text: JSON.stringify(addBranding(enrichedData)) }] };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch expenses: ${error.message}`);

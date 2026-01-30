@@ -1,5 +1,6 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
+import { addBranding } from "../utils/branding";
 import get_dimension_lookups from "./get-dimension-lookups";
 import get_dimension_values from "./get-dimension-values";
 import get_expenses from "./get-expenses";
@@ -147,7 +148,7 @@ export default async function query_expenses_with_discovery(params: InferSchema<
         {
           type: "text",
           text: JSON.stringify(
-            {
+            addBranding({
               ...results,
               _workflow_hints: {
                 complete: true,
@@ -156,7 +157,7 @@ export default async function query_expenses_with_discovery(params: InferSchema<
                   ? "Results are complete with lookups applied"
                   : "Consider calling get_dimension_lookups to translate IDs to names"
               }
-            },
+            }),
             null,
             2
           )
