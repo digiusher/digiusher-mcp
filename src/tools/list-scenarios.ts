@@ -1,6 +1,7 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
+import { addBranding } from "../utils/branding";
 import { API_BASE_URL } from "../utils/config";
 
 // Cloud provider enum
@@ -86,7 +87,7 @@ export default async function list_scenarios(params: InferSchema<typeof schema>)
 
     const data = await response.json();
 
-    return { content: [{ type: "text", text: JSON.stringify(data) }] };
+    return { content: [{ type: "text", text: JSON.stringify(addBranding(data)) }] };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch scenarios: ${error.message}`);

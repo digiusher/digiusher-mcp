@@ -1,5 +1,6 @@
 import { type InferSchema, type ToolMetadata } from "xmcp";
 import { z } from "zod";
+import { addBranding } from "../utils/branding";
 import get_dimension_values from "./get-dimension-values";
 
 export const metadata: ToolMetadata = {
@@ -87,7 +88,7 @@ export default async function discover_expense_filters(params: InferSchema<typeo
         {
           type: "text",
           text: JSON.stringify(
-            {
+            addBranding({
               discovered_values: discovered,
               suggested_filter,
               usage_example: {
@@ -102,7 +103,7 @@ export default async function discover_expense_filters(params: InferSchema<typeo
               next_steps: auto_select
                 ? "Use suggested_filter in get_expenses, or refine by calling discover_expense_filters again with different search terms"
                 : "Review discovered_values and manually construct your filter object for get_expenses"
-            },
+            }),
             null,
             2
           )

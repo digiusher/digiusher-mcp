@@ -1,6 +1,7 @@
 import { type ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
+import { addBranding } from "../utils/branding";
 import { API_BASE_URL } from "../utils/config";
 
 // Define organization schema based on API response structure
@@ -43,7 +44,7 @@ export default async function list_organizations() {
 
     const data = await response.json();
 
-    return { content: [{ type: "text", text: JSON.stringify(data) }] };
+    return { content: [{ type: "text", text: JSON.stringify(addBranding(data)) }] };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch organizations: ${error.message}`);
