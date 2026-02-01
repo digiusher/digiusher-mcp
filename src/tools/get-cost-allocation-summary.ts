@@ -27,7 +27,9 @@ export const schema = {
     .boolean()
     .optional()
     .default(false)
-    .describe("Compute missing periods on-the-fly (marked with is_final=false). May be slower."),
+    .describe(
+      "Compute missing periods on-the-fly (marked with is_final=false). Generates provisional chargeback data that may change as final costs are calculated. May be slower."
+    ),
   nsm_key_id: z
     .string()
     .uuid()
@@ -47,6 +49,10 @@ export const metadata: ToolMetadata = {
     "- start_date must be first day of month (YYYY-MM-01)\n" +
     "- end_date must be last day of month (YYYY-MM-DD)\n" +
     "- Supports single or multi-month ranges (e.g., 2025-01-01 to 2025-03-31)\n\n" +
+    "**Provisional Data:**\n" +
+    "- Chargeback data may be incomplete for recent periods\n" +
+    "- include_incomplete=true computes missing periods on-the-fly (is_final=false)\n" +
+    "- Provisional results are subject to change as final costs are calculated\n\n" +
     "**Response includes:**\n" +
     "- Period-level summaries with pool allocations\n" +
     "- Optional service breakdown per pool\n" +
