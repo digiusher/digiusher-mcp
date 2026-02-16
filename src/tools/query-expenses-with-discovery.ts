@@ -1,4 +1,4 @@
-import { type InferSchema, type ToolMetadata } from "xmcp";
+import type { InferSchema, ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { addBranding } from "../utils/branding";
 import get_dimension_lookups from "./get-dimension-lookups";
@@ -26,16 +26,18 @@ export const metadata: ToolMetadata = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
+    openWorldHint: true,
   },
   _meta: {
     openai: {
       toolInvocation: {
-        invoking: "Discovering values, querying expenses, and fetching lookups...",
-        invoked: "Complete! Results include discovered values, expense data, and translated names."
-      }
-    }
-  }
+        invoking:
+          "Discovering values, querying expenses, and fetching lookups...",
+        invoked:
+          "Complete! Results include discovered values, expense data, and translated names.",
+      },
+    },
+  },
 };
 
 export const schema = {
@@ -46,14 +48,31 @@ export const schema = {
   // Discovery hints for automatic filter building
   discover_filters: z
     .object({
-      service_name: z.string().optional().describe("Search term for service names (e.g., 'EC2', 'S3')"),
-      region_id: z.string().optional().describe("Search term for regions (e.g., 'us-east', 'eu-west')"),
-      provider: z.string().optional().describe("Search term for providers (e.g., 'AWS', 'Azure')"),
-      resource_type: z.string().optional().describe("Search term for resource types"),
-      data_source_id: z.array(z.string()).optional().describe("Specific data source IDs to filter by")
+      service_name: z
+        .string()
+        .optional()
+        .describe("Search term for service names (e.g., 'EC2', 'S3')"),
+      region_id: z
+        .string()
+        .optional()
+        .describe("Search term for regions (e.g., 'us-east', 'eu-west')"),
+      provider: z
+        .string()
+        .optional()
+        .describe("Search term for providers (e.g., 'AWS', 'Azure')"),
+      resource_type: z
+        .string()
+        .optional()
+        .describe("Search term for resource types"),
+      data_source_id: z
+        .array(z.string())
+        .optional()
+        .describe("Specific data source IDs to filter by"),
     })
     .optional()
-    .describe("Automatically discover and apply filters by providing search terms"),
+    .describe(
+      "Automatically discover and apply filters by providing search terms"
+    ),
 
   // Or provide explicit filters if already validated
   filters: z
@@ -70,60 +89,72 @@ export const schema = {
     .max(3)
     .optional(),
   metrics: z
-    .array(z.enum(["billed_cost", "effective_cost", "list_cost", "consumed_quantity"]))
+    .array(
+      z.enum([
+        "billed_cost",
+        "effective_cost",
+        "list_cost",
+        "consumed_quantity",
+      ])
+    )
     .default(["effective_cost", "billed_cost"]),
   order_by: z.array(z.record(z.any())).max(3).optional(),
-  limit: z.number().min(1).max(10000).optional(),
+  limit: z.number().min(1).max(10_000).optional(),
 
-  include_lookups: z.boolean().default(true).describe("Whether to fetch and apply ID-to-name lookups to results")
+  include_lookups: z
+    .boolean()
+    .default(true)
+    .describe("Whether to fetch and apply ID-to-name lookups to results"),
 };
 
-export default async function query_expenses_with_discovery(params: InferSchema<typeof schema>) {
-  const { organization_id, discover_filters, filters, include_lookups = true, ...expenseParams } = params;
+export default async function query_expenses_with_discovery(
+  params: InferSchema<typeof schema>
+) {
+  const {
+    organization_id,
+    discover_filters,
+    filters,
+    include_lookups = true,
+    ...expenseParams
+  } = params;
 
-  const results: any = {
+  const results: {
+    discovered_values: Record<string, unknown[]>;
+    expenses: unknown | null;
+    lookups: unknown | null;
+    workflow_executed: string[];
+  } = {
     discovered_values: {},
     expenses: null,
     lookups: null,
-    workflow_executed: []
+    workflow_executed: [],
   };
 
   try {
     // Step 1: Discover filter values if requested
-    let finalFilters = filters || {};
+    const finalFilters = filters || {};
 
     if (discover_filters) {
       results.workflow_executed.push("dimension_discovery");
-
-      for (const [dimensionName, searchTerm] of Object.entries(discover_filters)) {
-        if (!searchTerm) continue;
-
-        const dimensionResult = await get_dimension_values({
-          organization_id,
-          dimension: {
-            dimension_type: "standard",
-            name: dimensionName as any
-          },
-          search: typeof searchTerm === "string" ? searchTerm : undefined,
-          limit: 100
-        });
-
-        const dimensionData = JSON.parse(dimensionResult.content[0].text);
-        results.discovered_values[dimensionName] = dimensionData.values || [];
-
-        // Auto-select discovered values for filters
-        if (dimensionData.values && dimensionData.values.length > 0) {
-          finalFilters[dimensionName] = dimensionData.values;
-        }
-      }
+      await performDiscovery(
+        organization_id,
+        discover_filters,
+        results.discovered_values,
+        finalFilters
+      );
     }
 
     // Step 2: Query expenses with validated filters
     results.workflow_executed.push("expense_query");
     const expenseResult = await get_expenses({
       organization_id,
+      // biome-ignore lint/suspicious/noExplicitAny: Complex type matching for expense params
       ...(expenseParams as any),
-      filters: Object.keys(finalFilters).length > 0 ? (finalFilters as any) : undefined
+      filters:
+        Object.keys(finalFilters).length > 0
+          ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic filters are hard to type strictly without exporting types
+            (finalFilters as any)
+          : undefined,
     });
 
     results.expenses = JSON.parse(expenseResult.content[0].text);
@@ -134,7 +165,7 @@ export default async function query_expenses_with_discovery(params: InferSchema<
       const lookupResult = await get_dimension_lookups({
         organization_id,
         include_pools: true,
-        include_data_sources: true
+        include_data_sources: true,
       });
 
       results.lookups = JSON.parse(lookupResult.content[0].text);
@@ -155,19 +186,76 @@ export default async function query_expenses_with_discovery(params: InferSchema<
                 steps_executed: results.workflow_executed,
                 next_steps: include_lookups
                   ? "Results are complete with lookups applied"
-                  : "Consider calling get_dimension_lookups to translate IDs to names"
-              }
+                  : "Consider calling get_dimension_lookups to translate IDs to names",
+              },
             }),
             null,
             2
-          )
-        }
-      ]
+          ),
+        },
+      ],
     };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Workflow failed: ${error.message}`);
     }
-    throw new Error("Workflow failed: Unknown error");
+  }
+}
+
+async function performDiscovery(
+  organization_id: string,
+  discover_filters: Record<string, string | string[] | undefined>,
+  discovered_values: Record<string, unknown[]>,
+  finalFilters: Record<string, unknown>
+) {
+  for (const [dimensionName, searchTerm] of Object.entries(discover_filters)) {
+    if (!searchTerm) {
+      continue;
+    }
+
+    // Skip if searchTerm is an array (already provided IDs)
+    if (Array.isArray(searchTerm)) {
+      continue;
+    }
+
+    const dimensionResult = await get_dimension_values({
+      organization_id,
+      dimension: {
+        dimension_type: "standard",
+        name: dimensionName as
+          | "service_name"
+          | "service_category"
+          | "resource_type"
+          | "resource_id"
+          | "region_id"
+          | "network_from"
+          | "network_to"
+          | "data_source_id"
+          | "provider"
+          | "publisher"
+          | "charge_category"
+          | "pricing_category"
+          | "license_model"
+          | "sku_name"
+          | "invoice_id"
+          | "invoice_issuer"
+          | "commitment_discount_type"
+          | "commitment_discount_category"
+          | "commitment_discount_id"
+          | "consumed_unit"
+          | "pool_id"
+          | "rule_id",
+      },
+      search: searchTerm,
+      limit: 100,
+    });
+
+    const dimensionData = JSON.parse(dimensionResult.content[0].text);
+    discovered_values[dimensionName] = dimensionData.values || [];
+
+    // Auto-select discovered values for filters
+    if (dimensionData.values && dimensionData.values.length > 0) {
+      finalFilters[dimensionName] = dimensionData.values;
+    }
   }
 }

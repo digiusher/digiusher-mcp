@@ -2,32 +2,39 @@ export interface WorkflowHint {
   requires_lookups?: boolean;
   contains_ids?: string[];
   next_step?: string;
-  lookup_params?: Record<string, any>;
+  lookup_params?: Record<string, unknown>;
   workflow_complete?: boolean;
 }
 
-export function addWorkflowHints(data: any, hints: WorkflowHint) {
+export function addWorkflowHints<T>(
+  data: T,
+  hints: WorkflowHint
+): T & { _workflow_hints: WorkflowHint } {
   return {
     ...data,
-    _workflow_hints: hints
+    _workflow_hints: hints,
   };
 }
 
-export function createExpenseWorkflowHint(organizationId: string, hasIDs: boolean = true): WorkflowHint {
+export function createExpenseWorkflowHint(
+  organizationId: string,
+  hasIDs = true
+): WorkflowHint {
   if (hasIDs) {
     return {
       requires_lookups: true,
       contains_ids: ["data_source_id", "pool_id"],
-      next_step: "Call get_dimension_lookups to translate IDs to readable names",
+      next_step:
+        "Call get_dimension_lookups to translate IDs to readable names",
       lookup_params: {
         organization_id: organizationId,
         include_pools: true,
-        include_data_sources: true
-      }
+        include_data_sources: true,
+      },
     };
   }
 
   return {
-    workflow_complete: true
+    workflow_complete: true,
   };
 }

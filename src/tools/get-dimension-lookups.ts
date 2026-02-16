@@ -1,4 +1,4 @@
-import { type InferSchema, type ToolMetadata } from "xmcp";
+import type { InferSchema, ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
 import { addBranding } from "../utils/branding";
@@ -6,9 +6,20 @@ import { API_BASE_URL } from "../utils/config";
 
 // Define schema
 export const schema = {
-  organization_id: z.string().uuid().describe("The organization ID to query dimension lookups for"),
-  include_pools: z.boolean().default(true).optional().describe("Include pool lookups in the response"),
-  include_data_sources: z.boolean().default(true).optional().describe("Include data source lookups in the response")
+  organization_id: z
+    .string()
+    .uuid()
+    .describe("The organization ID to query dimension lookups for"),
+  include_pools: z
+    .boolean()
+    .default(true)
+    .optional()
+    .describe("Include pool lookups in the response"),
+  include_data_sources: z
+    .boolean()
+    .default(true)
+    .optional()
+    .describe("Include data source lookups in the response"),
 };
 
 // Define tool metadata
@@ -31,21 +42,28 @@ export const metadata: ToolMetadata = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
+    openWorldHint: true,
   },
   _meta: {
     openai: {
       toolInvocation: {
         invoking: "Fetching ID-to-name lookup tables...",
-        invoked: "Lookups ready. These translate IDs in expense results to human-readable names."
-      }
-    }
-  }
+        invoked:
+          "Lookups ready. These translate IDs in expense results to human-readable names.",
+      },
+    },
+  },
 };
 
 // Tool implementation
-export default async function get_dimension_lookups(params: InferSchema<typeof schema>) {
-  const { organization_id, include_pools = true, include_data_sources = true } = params;
+export default async function get_dimension_lookups(
+  params: InferSchema<typeof schema>
+) {
+  const {
+    organization_id,
+    include_pools = true,
+    include_data_sources = true,
+  } = params;
 
   try {
     // Build query parameters
@@ -57,17 +75,21 @@ export default async function get_dimension_lookups(params: InferSchema<typeof s
       `${API_BASE_URL}/api/v3/organizations/${organization_id}/expenses/dimensions/lookups?${queryParams.toString()}`,
       {
         method: "GET",
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `API request failed with status ${response.status}: ${errorText}`
+      );
     }
 
     const data = await response.json();
-    return { content: [{ type: "text", text: JSON.stringify(addBranding(data)) }] };
+    return {
+      content: [{ type: "text", text: JSON.stringify(addBranding(data)) }],
+    };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch dimension lookups: ${error.message}`);

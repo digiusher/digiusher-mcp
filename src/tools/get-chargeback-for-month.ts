@@ -1,4 +1,4 @@
-import { type InferSchema, type ToolMetadata } from "xmcp";
+import type { InferSchema, ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
 import { addBranding } from "../utils/branding";
@@ -6,8 +6,15 @@ import { API_BASE_URL } from "../utils/config";
 
 // Define tool schema
 export const schema = {
-  organization_id: z.string().uuid().describe("The organization ID to query chargeback data for"),
-  month: z.string().describe("Month to retrieve chargeback data for (YYYY-MM-DD format, any day in the month)"),
+  organization_id: z
+    .string()
+    .uuid()
+    .describe("The organization ID to query chargeback data for"),
+  month: z
+    .string()
+    .describe(
+      "Month to retrieve chargeback data for (YYYY-MM-DD format, any day in the month)"
+    ),
   aggregate_flows: z
     .boolean()
     .optional()
@@ -16,7 +23,7 @@ export const schema = {
       "Return aggregated flows (summed across services and dates) for Sankey visualization. " +
         "When true, flow_details will have service_name=None and date=None. " +
         "When false (default), returns detailed breakdown by service and date."
-    )
+    ),
 };
 
 // Define tool metadata
@@ -38,12 +45,14 @@ export const metadata: ToolMetadata = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
-  }
+    openWorldHint: true,
+  },
 };
 
 // Tool implementation
-export default async function get_chargeback_for_month(params: InferSchema<typeof schema>) {
+export default async function get_chargeback_for_month(
+  params: InferSchema<typeof schema>
+) {
   const { organization_id, month, aggregate_flows } = params;
 
   try {
@@ -58,17 +67,21 @@ export default async function get_chargeback_for_month(params: InferSchema<typeo
 
     const response = await fetch(url, {
       method: "GET",
-      headers: getAuthHeaders(true)
+      headers: getAuthHeaders(true),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `API request failed with status ${response.status}: ${errorText}`
+      );
     }
 
     const data = await response.json();
 
-    return { content: [{ type: "text", text: JSON.stringify(addBranding(data)) }] };
+    return {
+      content: [{ type: "text", text: JSON.stringify(addBranding(data)) }],
+    };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch chargeback data: ${error.message}`);

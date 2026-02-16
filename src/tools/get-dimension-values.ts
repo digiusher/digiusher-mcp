@@ -1,4 +1,4 @@
-import { type InferSchema, type ToolMetadata } from "xmcp";
+import type { InferSchema, ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
 import { addBranding } from "../utils/branding";
@@ -6,7 +6,7 @@ import { API_BASE_URL } from "../utils/config";
 
 // Constants for API constraints
 const DIMENSION_VALUES_LIMIT_DEFAULT = 100;
-const DIMENSION_VALUES_LIMIT_MAX = 1000000;
+const DIMENSION_VALUES_LIMIT_MAX = 1_000_000;
 const DIMENSION_VALUES_SEARCH_MAX = 100;
 
 // Standard dimension names enum (all 22 standard dimensions from API spec)
@@ -32,7 +32,7 @@ const standardDimensionNameEnum = z.enum([
   "commitment_discount_id",
   "consumed_unit",
   "pool_id",
-  "rule_id"
+  "rule_id",
 ]);
 
 // Dimension specification using discriminated union
@@ -40,19 +40,25 @@ const dimensionSpecSchema = z.discriminatedUnion("dimension_type", [
   // Standard dimension variant
   z
     .object({
-      dimension_type: z.literal("standard").describe("Query a standard built-in dimension"),
+      dimension_type: z
+        .literal("standard")
+        .describe("Query a standard built-in dimension"),
       name: standardDimensionNameEnum.describe(
         "Standard dimension to query available values for. " +
           "Examples: 'service_name' for cloud services, 'region_id' for regions, " +
           "'provider' for cloud providers, 'charge_category' for charge types"
-      )
+      ),
     })
-    .describe("Query values for a standard dimension like service_name, region_id, provider, resource_type, etc."),
+    .describe(
+      "Query values for a standard dimension like service_name, region_id, provider, resource_type, etc."
+    ),
 
   // Tag dimension variant
   z
     .object({
-      dimension_type: z.literal("tag").describe("Query custom tag keys or values"),
+      dimension_type: z
+        .literal("tag")
+        .describe("Query custom tag keys or values"),
       tag_type: z
         .enum(["keys", "values"])
         .describe(
@@ -67,18 +73,21 @@ const dimensionSpecSchema = z.discriminatedUnion("dimension_type", [
           "Tag key name. REQUIRED when tag_type='values' to specify which tag's values to query. " +
             "MUST BE OMITTED when tag_type='keys'. " +
             "Examples: 'Environment', 'Owner', 'Application', 'CostCenter'"
-        )
+        ),
     })
     .describe(
       "Query tag-related values. " +
         "Use tag_type='keys' to discover all available tag keys, " +
         "or tag_type='values' with a specific key to get all values for that tag."
-    )
+    ),
 ]);
 
 // Main tool schema
 export const schema = {
-  organization_id: z.string().uuid().describe("The organization ID to query dimension values for"),
+  organization_id: z
+    .string()
+    .uuid()
+    .describe("The organization ID to query dimension values for"),
 
   dimension: dimensionSpecSchema.describe(
     "Dimension specification - either a standard dimension or a tag-based dimension. " +
@@ -105,7 +114,7 @@ export const schema = {
       "Maximum number of values to return (1 to 1,000,000). Defaults to 100. " +
         "Use higher values to get comprehensive lists for reporting or analysis. " +
         "Response includes 'has_more' flag to indicate if more values are available."
-    )
+    ),
 };
 
 // Tool metadata
@@ -128,36 +137,46 @@ export const metadata: ToolMetadata = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
+    openWorldHint: true,
   },
   _meta: {
     openai: {
       toolInvocation: {
         invoking: "Discovering available dimension values...",
-        invoked: "Dimension values discovered. Use these exact values in get_expenses filters."
-      }
-    }
-  }
+        invoked:
+          "Dimension values discovered. Use these exact values in get_expenses filters.",
+      },
+    },
+  },
 };
 
 // Tool implementation
-export default async function get_dimension_values(params: InferSchema<typeof schema>) {
+export default async function get_dimension_values(
+  params: InferSchema<typeof schema>
+) {
   const { organization_id, ...requestBody } = params;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v3/organizations/${organization_id}/expenses/dimensions/query`, {
-      method: "POST",
-      headers: getAuthHeaders(true),
-      body: JSON.stringify(requestBody)
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/api/v3/organizations/${organization_id}/expenses/dimensions/query`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(true),
+        body: JSON.stringify(requestBody),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `API request failed with status ${response.status}: ${errorText}`
+      );
     }
 
     const data = await response.json();
-    return { content: [{ type: "text", text: JSON.stringify(addBranding(data)) }] };
+    return {
+      content: [{ type: "text", text: JSON.stringify(addBranding(data)) }],
+    };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch dimension values: ${error.message}`);

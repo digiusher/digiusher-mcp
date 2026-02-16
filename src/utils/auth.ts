@@ -15,10 +15,12 @@ export function getAuthToken(): string {
  * @param includeContentType - Whether to include Content-Type: application/json header
  * @returns {Record<string, string>} Headers object with Authorization and optionally Content-Type
  */
-export function getAuthHeaders(includeContentType: boolean = false): Record<string, string> {
+export function getAuthHeaders(
+  includeContentType = false
+): Record<string, string> {
   const token = getAuthToken();
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`
+    Authorization: `Bearer ${token}`,
   };
 
   if (includeContentType) {

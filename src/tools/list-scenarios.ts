@@ -1,4 +1,4 @@
-import { type InferSchema, type ToolMetadata } from "xmcp";
+import type { InferSchema, ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
 import { addBranding } from "../utils/branding";
@@ -16,19 +16,22 @@ const cloudProviderEnum = z.enum([
   "nebius",
   "databricks",
   "oci_cnr",
-  "gcp_tenant"
+  "gcp_tenant",
 ]);
 
 // Define tool schema
 export const schema = {
-  organization_id: z.string().uuid().describe("The organization ID to query scenarios for"),
+  organization_id: z
+    .string()
+    .uuid()
+    .describe("The organization ID to query scenarios for"),
   cloud_provider: z
     .union([cloudProviderEnum, z.null()])
     .optional()
     .describe(
       "Filter scenarios by cloud provider (e.g., 'aws_cnr', 'azure_cnr', 'gcp_cnr'). " +
         "If not specified, returns scenarios for all cloud providers."
-    )
+    ),
 };
 
 // Define tool metadata
@@ -56,12 +59,14 @@ export const metadata: ToolMetadata = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
-  }
+    openWorldHint: true,
+  },
 };
 
 // Tool implementation
-export default async function list_scenarios(params: InferSchema<typeof schema>) {
+export default async function list_scenarios(
+  params: InferSchema<typeof schema>
+) {
   const { organization_id, cloud_provider } = params;
 
   try {
@@ -77,17 +82,21 @@ export default async function list_scenarios(params: InferSchema<typeof schema>)
 
     const response = await fetch(url, {
       method: "GET",
-      headers: getAuthHeaders(true)
+      headers: getAuthHeaders(true),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `API request failed with status ${response.status}: ${errorText}`
+      );
     }
 
     const data = await response.json();
 
-    return { content: [{ type: "text", text: JSON.stringify(addBranding(data)) }] };
+    return {
+      content: [{ type: "text", text: JSON.stringify(addBranding(data)) }],
+    };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch scenarios: ${error.message}`);

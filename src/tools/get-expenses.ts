@@ -1,9 +1,12 @@
-import { type InferSchema, type ToolMetadata } from "xmcp";
+import type { InferSchema, ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
 import { addBranding } from "../utils/branding";
 import { API_BASE_URL } from "../utils/config";
-import { addWorkflowHints, createExpenseWorkflowHint } from "../utils/workflow-hints";
+import {
+  addWorkflowHints,
+  createExpenseWorkflowHint,
+} from "../utils/workflow-hints";
 
 const currencyEnum = z.enum([
   "AED",
@@ -186,7 +189,7 @@ const currencyEnum = z.enum([
   "YER",
   "ZAR",
   "ZMW",
-  "ZWL"
+  "ZWL",
 ]);
 
 const standardDimensionEnum = z.enum([
@@ -211,16 +214,20 @@ const standardDimensionEnum = z.enum([
   "commitment_discount_id",
   "consumed_unit",
   "pool_id",
-  "rule_id"
+  "rule_id",
 ]);
 
 const tagSpecSchema = z
   .object({
-    type: z.enum(["keys", "values"]).describe("Type of tag operation for TagSpec"),
+    type: z
+      .enum(["keys", "values"])
+      .describe("Type of tag operation for TagSpec"),
     key: z
       .union([z.string(), z.null()])
       .optional()
-      .describe("Tag key name. Required when type='values', must be None when type='keys'")
+      .describe(
+        "Tag key name. Required when type='values', must be None when type='keys'"
+      ),
   })
   .describe(
     'Specification for tag-related operations: grouping, querying values, etc.\n\nCan be used for:\n- Grouping by tag keys (type="keys") - shows which tag keys exist and their costs\n- Grouping by tag values (type="values") - shows values for a specific tag key\n- Querying available tag values'
@@ -229,14 +236,16 @@ const tagSpecSchema = z
 const standardFilterSchema = z
   .object({
     include: z.union([z.array(z.string()), z.null()]).optional(),
-    exclude: z.union([z.array(z.string()), z.null()]).optional()
+    exclude: z.union([z.array(z.string()), z.null()]).optional(),
   })
-  .describe("Standard filter for dimensions - consistent pattern for inclusion/exclusion");
+  .describe(
+    "Standard filter for dimensions - consistent pattern for inclusion/exclusion"
+  );
 
 const rangeFilterSchema = z
   .object({
     value: z.number(),
-    op: z.enum(["gt", "gte", "lt", "lte"])
+    op: z.enum(["gt", "gte", "lt", "lte"]),
   })
   .describe("Range filter for numeric values with operator");
 
@@ -245,9 +254,11 @@ const tagFilterSchema = z
     key: z.string(),
     include: z.union([z.array(z.string()), z.null()]).optional(),
     exclude: z.union([z.array(z.string()), z.null()]).optional(),
-    exists: z.union([z.boolean(), z.null()]).optional()
+    exists: z.union([z.boolean(), z.null()]).optional(),
   })
-  .describe("Filter for tag-based dimensions - extends standard filter with existence check");
+  .describe(
+    "Filter for tag-based dimensions - extends standard filter with existence check"
+  );
 
 const filtersSchema = z
   .object({
@@ -342,8 +353,10 @@ const filtersSchema = z
     billed_cost: z.union([z.array(rangeFilterSchema), z.null()]).optional(),
     effective_cost: z.union([z.array(rangeFilterSchema), z.null()]).optional(),
     list_cost: z.union([z.array(rangeFilterSchema), z.null()]).optional(),
-    consumed_quantity: z.union([z.array(rangeFilterSchema), z.null()]).optional(),
-    tags: z.union([z.array(tagFilterSchema), z.null()]).optional()
+    consumed_quantity: z
+      .union([z.array(rangeFilterSchema), z.null()])
+      .optional(),
+    tags: z.union([z.array(tagFilterSchema), z.null()]).optional(),
   })
   .describe(
     "Filter expenses by various dimensions.\n\nEach filter accepts either a simple list of values to include,\nor a StandardFilter object for advanced include/exclude logic."
@@ -352,25 +365,47 @@ const filtersSchema = z
 const orderBySchema = z
   .object({
     field: z
-      .enum(["date", "billed_cost", "effective_cost", "list_cost", "consumed_quantity", "resource_count"])
+      .enum([
+        "date",
+        "billed_cost",
+        "effective_cost",
+        "list_cost",
+        "consumed_quantity",
+        "resource_count",
+      ])
       .describe("Fields that can be used for ordering expense results"),
-    direction: z.enum(["asc", "desc"]).optional().describe("Sort direction for ordering results")
+    direction: z
+      .enum(["asc", "desc"])
+      .optional()
+      .describe("Sort direction for ordering results"),
   })
   .describe("Specification for ordering expense results");
 
 export const schema = {
-  organization_id: z.string().uuid().describe("The organization ID to query expenses for"),
-  start_date: z.string().describe("Start date for expense query (ISO 8601 format: YYYY-MM-DD)"),
-  end_date: z.string().describe("End date for expense query (ISO 8601 format: YYYY-MM-DD)"),
-  currency: currencyEnum.optional().describe("Currency code for expense amounts"),
-  granularity: z.enum(["day", "week", "month", "year", "total"]).optional().describe("Time granularity for grouping results"),
+  organization_id: z
+    .string()
+    .uuid()
+    .describe("The organization ID to query expenses for"),
+  start_date: z
+    .string()
+    .describe("Start date for expense query (ISO 8601 format: YYYY-MM-DD)"),
+  end_date: z
+    .string()
+    .describe("End date for expense query (ISO 8601 format: YYYY-MM-DD)"),
+  currency: currencyEnum
+    .optional()
+    .describe("Currency code for expense amounts"),
+  granularity: z
+    .enum(["day", "week", "month", "year", "total"])
+    .optional()
+    .describe("Time granularity for grouping results"),
   group_by: z
     .array(
       z.union([
         standardDimensionEnum.describe(
           "All standard dimensions for grouping and filtering\n\nThere are other possible dimensions that we can also group by, eg: tags"
         ),
-        tagSpecSchema
+        tagSpecSchema,
       ])
     )
     .max(3)
@@ -391,18 +426,27 @@ export const schema = {
         "2. Then: get_expenses(filters={service_name:['Amazon Elastic Compute Cloud']})"
     ),
   metrics: z
-    .array(z.enum(["billed_cost", "effective_cost", "list_cost", "consumed_quantity"]))
+    .array(
+      z.enum([
+        "billed_cost",
+        "effective_cost",
+        "list_cost",
+        "consumed_quantity",
+      ])
+    )
     .default(["effective_cost", "billed_cost"])
     .describe("Metrics to include in results"),
   order_by: z
     .array(orderBySchema)
     .max(3)
     .default([{ field: "billed_cost", direction: "desc" }])
-    .describe("Order results by specified fields (max 3). Defaults to billed_cost DESC."),
+    .describe(
+      "Order results by specified fields (max 3). Defaults to billed_cost DESC."
+    ),
   limit: z
-    .union([z.number().min(1).max(10000), z.null()])
+    .union([z.number().min(1).max(10_000), z.null()])
     .optional()
-    .describe("Limit number of results returned (1-10000)")
+    .describe("Limit number of results returned (1-10000)"),
 };
 
 // Define tool metadata
@@ -426,20 +470,22 @@ export const metadata: ToolMetadata = {
     "- Using invalid values causes API errors\n" +
     "- When in doubt, call get_dimension_values first",
   annotations: {
-    title: "Query Expenses (Requires get_dimension_values first, then get_dimension_lookups after)",
+    title:
+      "Query Expenses (Requires get_dimension_values first, then get_dimension_lookups after)",
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
+    openWorldHint: true,
   },
   _meta: {
     openai: {
       toolInvocation: {
         invoking: "Querying expense data...",
-        invoked: "Expenses retrieved. Call get_dimension_lookups to translate IDs to names."
-      }
-    }
-  }
+        invoked:
+          "Expenses retrieved. Call get_dimension_lookups to translate IDs to names.",
+      },
+    },
+  },
 };
 
 // Tool implementation
@@ -447,32 +493,47 @@ export default async function get_expenses(params: InferSchema<typeof schema>) {
   const { organization_id, ...requestBody } = params;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v3/organizations/${organization_id}/expenses`, {
-      method: "POST",
-      headers: getAuthHeaders(true),
-      body: JSON.stringify(requestBody)
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/api/v3/organizations/${organization_id}/expenses`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(true),
+        body: JSON.stringify(requestBody),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
 
       // Special handling for invalid filter values
-      if (response.status === 400 && errorText.toLowerCase().includes("invalid")) {
+      if (
+        response.status === 400 &&
+        errorText.toLowerCase().includes("invalid")
+      ) {
         throw new Error(
-          `Invalid filter value detected. ` +
-            `REQUIRED ACTION: Call get_dimension_values to discover valid values. ` +
+          "Invalid filter value detected. " +
+            "REQUIRED ACTION: Call get_dimension_values to discover valid values. " +
             `Example: get_dimension_values({organization_id: "${organization_id}", ` +
             `dimension: {dimension_type: "standard", name: "service_name"}}). ` +
             `Original error: ${errorText}`
         );
       }
 
-      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `API request failed with status ${response.status}: ${errorText}`
+      );
     }
 
     const data = await response.json();
-    const enrichedData = addWorkflowHints(data, createExpenseWorkflowHint(organization_id));
-    return { content: [{ type: "text", text: JSON.stringify(addBranding(enrichedData)) }] };
+    const enrichedData = addWorkflowHints(
+      data,
+      createExpenseWorkflowHint(organization_id)
+    );
+    return {
+      content: [
+        { type: "text", text: JSON.stringify(addBranding(enrichedData)) },
+      ],
+    };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch expenses: ${error.message}`);
