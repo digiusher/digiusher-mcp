@@ -1,4 +1,4 @@
-import { type InferSchema, type ToolMetadata } from "xmcp";
+import type { InferSchema, ToolMetadata } from "xmcp";
 import { z } from "zod";
 import { getAuthHeaders } from "../utils/auth";
 import { addBranding } from "../utils/branding";
@@ -7,22 +7,46 @@ import { API_BASE_URL } from "../utils/config";
 // NSM filter schema for unit economics
 const nsmFilterSchema = z
   .object({
-    dimension: z.string().describe("Dimension key to filter by (e.g., 'team_id', 'environment')"),
-    values: z.array(z.string()).min(1).describe("Dimension values to include")
+    dimension: z
+      .string()
+      .describe("Dimension key to filter by (e.g., 'team_id', 'environment')"),
+    values: z.array(z.string()).min(1).describe("Dimension values to include"),
   })
   .describe("Filter NSM values by a specific dimension");
 
 // Define tool schema
 export const schema = {
-  organization_id: z.string().uuid().describe("The organization ID to query cost allocation summary for"),
-  start_date: z.string().describe("Start date - must be first day of month (YYYY-MM-01)"),
-  end_date: z.string().describe("End date (inclusive) - must be last day of month (YYYY-MM-DD)"),
+  organization_id: z
+    .string()
+    .uuid()
+    .describe("The organization ID to query cost allocation summary for"),
+  start_date: z
+    .string()
+    .describe("Start date - must be first day of month (YYYY-MM-01)"),
+  end_date: z
+    .string()
+    .describe("End date (inclusive) - must be last day of month (YYYY-MM-DD)"),
   view: z
     .enum(["showback", "chargeback"])
-    .describe("View type: 'showback' for cost visibility or 'chargeback' for cost allocation"),
-  granularity: z.enum(["day", "month"]).optional().describe("Time granularity for cost allocation summary ('day' or 'month')"),
-  include_service_breakdown: z.boolean().optional().default(false).describe("Include per-service breakdown in the response"),
-  pool_id: z.string().uuid().optional().describe("Filter results to a specific pool by ID"),
+    .describe(
+      "View type: 'showback' for cost visibility or 'chargeback' for cost allocation"
+    ),
+  granularity: z
+    .enum(["day", "month"])
+    .optional()
+    .describe(
+      "Time granularity for cost allocation summary ('day' or 'month')"
+    ),
+  include_service_breakdown: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe("Include per-service breakdown in the response"),
+  pool_id: z
+    .string()
+    .uuid()
+    .optional()
+    .describe("Filter results to a specific pool by ID"),
   include_incomplete: z
     .boolean()
     .optional()
@@ -34,9 +58,19 @@ export const schema = {
     .string()
     .uuid()
     .optional()
-    .describe("NSM key to use for unit economics calculations. When provided, triggers unit economics in response."),
-  group_by: z.string().optional().describe("Dimension to group unit economics by (e.g., 'team_id', 'environment')"),
-  filters: z.array(nsmFilterSchema).optional().describe("Filter NSM values by dimension values before calculation")
+    .describe(
+      "NSM key to use for unit economics calculations. When provided, triggers unit economics in response."
+    ),
+  group_by: z
+    .string()
+    .optional()
+    .describe(
+      "Dimension to group unit economics by (e.g., 'team_id', 'environment')"
+    ),
+  filters: z
+    .array(nsmFilterSchema)
+    .optional()
+    .describe("Filter NSM values by dimension values before calculation"),
 };
 
 // Define tool metadata
@@ -68,32 +102,43 @@ export const metadata: ToolMetadata = {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
-    openWorldHint: true
-  }
+    openWorldHint: true,
+  },
 };
 
 // Tool implementation
-export default async function get_cost_allocation_summary(params: InferSchema<typeof schema>) {
+export default async function get_cost_allocation_summary(
+  params: InferSchema<typeof schema>
+) {
   const { organization_id, ...requestBody } = params;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v3/organizations/${organization_id}/cost-allocation/summary`, {
-      method: "POST",
-      headers: getAuthHeaders(true),
-      body: JSON.stringify(requestBody)
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/api/v3/organizations/${organization_id}/cost-allocation/summary`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(true),
+        body: JSON.stringify(requestBody),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `API request failed with status ${response.status}: ${errorText}`
+      );
     }
 
     const data = await response.json();
 
-    return { content: [{ type: "text", text: JSON.stringify(addBranding(data)) }] };
+    return {
+      content: [{ type: "text", text: JSON.stringify(addBranding(data)) }],
+    };
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Failed to fetch cost allocation summary: ${error.message}`);
+      throw new Error(
+        `Failed to fetch cost allocation summary: ${error.message}`
+      );
     }
     throw new Error("Failed to fetch cost allocation summary: Unknown error");
   }

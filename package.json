@@ -3,25 +3,25 @@
   "version": "0.1.0",
   "description": "An xmcp application with tool syntax",
   "engines": {
-    "node": ">=20.0.0"
+    "node": "24.11.1"
   },
+  "packageManager": "pnpm@10.28.2",
   "scripts": {
     "build": "xmcp build",
     "dev": "xmcp dev",
     "start": "node dist/http.js",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
     "prepare": "husky"
-  },
-  "lint-staged": {
-    "**/*": "prettier --write --ignore-unknown"
   },
   "dependencies": {
     "xmcp": "0.5.4",
     "zod": "3.24.4"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.3.15",
     "@types/node": "^25.0.3",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
-    "prettier": "3.7.4"
+    "ultracite": "7.2.2"
   }
 }

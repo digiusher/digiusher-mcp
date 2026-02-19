@@ -11,4 +11,5 @@
  *
  * Default: https://app.digiusher.com
  */
-export const API_BASE_URL = process.env.DIGIUSHER_API_BASE_URL || "https://app.digiusher.com";
+export const API_BASE_URL =
+  process.env.DIGIUSHER_API_BASE_URL || "https://app.digiusher.com";

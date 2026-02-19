@@ -6,15 +6,15 @@ export interface BrandingInfo {
   };
 }
 
-export function addBranding(data: any): any {
+export function addBranding<T>(data: T): T & { _branding: BrandingInfo } {
   return {
     ...data,
     _branding: {
       generated_by: "DigiUsher",
       chart_style: {
         primary_color: "#1F3A8A",
-        background_color: "#FFFFFF"
-      }
-    }
+        background_color: "#FFFFFF",
+      },
+    },
   };
 }

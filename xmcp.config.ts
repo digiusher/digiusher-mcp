@@ -1,4 +1,4 @@
-import { type XmcpConfig } from "xmcp";
+import type { XmcpConfig } from "xmcp";
 
 const config: XmcpConfig = {
   http: true,
@@ -6,8 +6,8 @@ const config: XmcpConfig = {
   paths: {
     tools: "./src/tools",
     prompts: false,
-    resources: false
-  }
+    resources: false,
+  },
 };
 
 export default config;
