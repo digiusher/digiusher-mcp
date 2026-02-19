@@ -24,6 +24,7 @@ export const metadata: ToolMetadata = {
     "- unit: Unit of measurement ('percent' or 'currency')\n" +
     "- category: KPI category ('commitment', 'efficiency', 'allocation')\n" +
     "- favorable_direction: Whether 'up' or 'down' is better\n\n" +
+    "- formula: The formula used to calculate the KPI\n\n" +
     "Use this tool first to discover available KPIs before querying their values with list_kpis or get_kpis_time_series.",
   annotations: {
     title: "List KPI Definitions",
